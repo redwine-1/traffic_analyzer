@@ -20,6 +20,9 @@ export function useDetectionStream({
     const [processedFrameSrc, setProcessedFrameSrc] = useState('');
     const [processedMetadata, setProcessedMetadata] = useState<any>(null);
 
+    const [processedFrames, setProcessedFrames] = useState<string[]>([]);
+    const [isProcessingComplete, setIsProcessingComplete] = useState(false);
+
     const detectionSocketRef = useRef<WebSocket | null>(null);
     const detectionCanvasRef = useRef<HTMLCanvasElement | null>(null);
     const detectionAnimationFrameRef = useRef<number | null>(null);
@@ -78,6 +81,8 @@ export function useDetectionStream({
 
         stopDetectionStreaming();
         setDetectionNotice('Connecting to ws://localhost:8765/ws ...');
+        setProcessedFrames([]);
+        setIsProcessingComplete(false);
 
         detectionVideoElement.currentTime = 0;
         detectionVideoElement.pause();
@@ -101,6 +106,7 @@ export function useDetectionStream({
             if (activeVideo.currentTime >= activeVideo.duration || activeVideo.ended) {
                 stopDetectionStreaming();
                 setDetectionNotice('Detection stream completed.');
+                setIsProcessingComplete(true);
                 return;
             }
 
@@ -153,7 +159,9 @@ export function useDetectionStream({
             try {
                 const response = JSON.parse(event.data);
                 if (response.image) {
-                    setProcessedFrameSrc(`data:image/jpeg;base64,${response.image}`);
+                    const src = `data:image/jpeg;base64,${response.image}`;
+                    setProcessedFrameSrc(src);
+                    setProcessedFrames((prev) => [...prev, src]);
                 }
                 if (response.metadata) {
                     setProcessedMetadata(response.metadata);
@@ -201,6 +209,8 @@ export function useDetectionStream({
         isDetectionStreaming,
         processedFrameSrc,
         processedMetadata,
+        processedFrames,
+        isProcessingComplete,
         startDetectionStreaming,
         stopDetectionStreaming,
     };

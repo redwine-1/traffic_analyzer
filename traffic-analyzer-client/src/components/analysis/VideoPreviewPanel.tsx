@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useDetectionStream } from '../../hooks/useDetectionStream'
+import { useProcessedPlayback } from '../../hooks/useProcessedPlayback'
+import { useVideoDownload } from '../../hooks/useVideoDownload'
+import { VideoPreviewStage } from './VideoPreviewStage'
 
 type VideoPreviewPanelProps = {
     fileName: string
@@ -31,6 +34,7 @@ function VideoPreviewPanel({
 }: VideoPreviewPanelProps) {
     const [showVideoPlayer, setShowVideoPlayer] = useState(false)
     const [playbackNotice, setPlaybackNotice] = useState('')
+
     const videoRef = useRef<HTMLVideoElement>(null)
     const detectionVideoRef = useRef<HTMLVideoElement>(null)
 
@@ -39,6 +43,8 @@ function VideoPreviewPanel({
         setDetectionNotice,
         isDetectionStreaming,
         processedFrameSrc,
+        processedFrames,
+        isProcessingComplete,
         startDetectionStreaming,
         stopDetectionStreaming,
     } = useDetectionStream({
@@ -49,6 +55,23 @@ function VideoPreviewPanel({
         onMetadataUpdate,
     })
 
+    const {
+        playbackIdx,
+        isPlayingProcessed,
+        startProcessedPlayback,
+        stopProcessedPlayback
+    } = useProcessedPlayback(processedFrames)
+
+    const {
+        handleDownloadVideo,
+        downloadNotice
+    } = useVideoDownload({
+        processedFrames,
+        videoWidth,
+        videoHeight,
+        fileName
+    })
+
     const loiPercent = loiMax > 0 ? Math.max(0, Math.min((loiHeight / loiMax) * 100, 100)) : 50
     const showLiveVideo = Boolean(videoUrl) && (showVideoPlayer || !firstFrameSrc)
 
@@ -57,31 +80,18 @@ function VideoPreviewPanel({
         setShowVideoPlayer(false)
         setPlaybackNotice('')
         setDetectionNotice('')
-    }, [videoUrl, firstFrameSrc, stopDetectionStreaming, setDetectionNotice])
-
-    useEffect(() => {
-        if (!showVideoPlayer) {
-            return
-        }
-
-        const videoElement = videoRef.current
-        if (!videoElement) {
-            return
-        }
-
-        const startPlayback = async () => {
-            try {
-                await videoElement.play()
-            } catch {
-                setPlaybackNotice('Playback was blocked by the browser. Use the video controls to start manually.')
-            }
-        }
-
-        void startPlayback()
-    }, [showVideoPlayer])
+        stopProcessedPlayback()
+    }, [videoUrl, firstFrameSrc, stopDetectionStreaming, setDetectionNotice, stopProcessedPlayback])
 
     const handlePlayVideo = () => {
         if (!videoUrl || isFrameLoading) {
+            return
+        }
+
+        if (isProcessingComplete && processedFrames.length > 0) {
+            setPlaybackNotice('')
+            setShowVideoPlayer(false)
+            startProcessedPlayback()
             return
         }
 
@@ -94,6 +104,7 @@ function VideoPreviewPanel({
             return
         }
 
+        stopProcessedPlayback()
         setPlaybackNotice('')
         startDetectionStreaming()
     }
@@ -116,43 +127,21 @@ function VideoPreviewPanel({
                 <p className="panel-subtitle">First frame from: {fileName}</p>
             </div>
 
-            <div className="video-stage">
-                {isFrameLoading ? (
-                    <p className="stage-message">Preparing video preview...</p>
-                ) : isDetectionStreaming && processedFrameSrc ? (
-                    <>
-                        <img className="video-frame-image" src={processedFrameSrc} alt="Processed detection frame" />
-                        <div className="loi-line" style={{ top: `${loiPercent}%` }}>
-                            <span className="loi-badge">LOI {loiHeight}px</span>
-                        </div>
-                    </>
-                ) : showLiveVideo ? (
-                    <>
-                        <video
-                            ref={videoRef}
-                            className="video-frame-video-fallback"
-                            src={videoUrl}
-                            controls
-                            muted
-                            playsInline
-                            preload="metadata"
-                            aria-label={`Video preview for ${fileName}`}
-                        />
-                        <div className="loi-line" style={{ top: `${loiPercent}%` }}>
-                            <span className="loi-badge">LOI {loiHeight}px</span>
-                        </div>
-                    </>
-                ) : firstFrameSrc ? (
-                    <>
-                        <img className="video-frame-image" src={firstFrameSrc} alt={`First frame of ${fileName}`} />
-                        <div className="loi-line" style={{ top: `${loiPercent}%` }}>
-                            <span className="loi-badge">LOI {loiHeight}px</span>
-                        </div>
-                    </>
-                ) : (
-                    <p className="stage-message">Unable to load preview.</p>
-                )}
-            </div>
+            <VideoPreviewStage
+                isFrameLoading={isFrameLoading}
+                fileName={fileName}
+                videoUrl={videoUrl}
+                firstFrameSrc={firstFrameSrc}
+                showLiveVideo={showLiveVideo}
+                isDetectionStreaming={isDetectionStreaming}
+                processedFrameSrc={processedFrameSrc}
+                isPlayingProcessed={isPlayingProcessed}
+                processedFrames={processedFrames}
+                playbackIdx={playbackIdx}
+                loiPercent={loiPercent}
+                loiHeight={loiHeight}
+                videoRef={videoRef}
+            />
 
             <div className="preview-actions" role="group" aria-label="Video and detection controls">
                 <button
@@ -173,12 +162,21 @@ function VideoPreviewPanel({
                 >
                     Start Detection
                 </button>
+                {isProcessingComplete && processedFrames.length > 0 && (
+                    <button
+                        type="button"
+                        className="preview-action-button"
+                        onClick={handleDownloadVideo}
+                        aria-label="Download processed video"
+                    >
+                        Download Video
+                    </button>
+                )}
             </div>
 
-            {playbackNotice && <p className="preview-note">{playbackNotice}</p>}
-
+            {playbackNotice && !downloadNotice && <p className="preview-note">{playbackNotice}</p>}
+            {downloadNotice && <p className="preview-note">{downloadNotice}</p>}
             {detectionNotice && <p className="preview-note">{detectionNotice}</p>}
-
             {previewNotice && <p className="preview-note">{previewNotice}</p>}
 
             <div className="video-meta-grid">
