@@ -35,23 +35,28 @@ class ObjectTracking:
         self.meta_data = []
         self.selected_id = None
 
-        # Video capturing module
-        self.cap = cv2.VideoCapture(source)
-        assert self.cap.isOpened(), "Error reading video file"
+        if source is not None:
+            # Video capturing module
+            self.cap = cv2.VideoCapture(source)
+            assert self.cap.isOpened(), "Error reading video file"
 
-        # Video writing module
-        w, h, fps = (
-            int(self.cap.get(x))
-            for x in (
-                cv2.CAP_PROP_FRAME_WIDTH,
-                cv2.CAP_PROP_FRAME_HEIGHT,
-                cv2.CAP_PROP_FPS,
+            # Video writing module
+            w, h, fps = (
+                int(self.cap.get(x))
+                for x in (
+                    cv2.CAP_PROP_FRAME_WIDTH,
+                    cv2.CAP_PROP_FRAME_HEIGHT,
+                    cv2.CAP_PROP_FPS,
+                )
             )
-        )
-        self.fps = fps if fps > 0 else 30
-        self.writer = cv2.VideoWriter(
-            "object-tracking.mp4", cv2.VideoWriter_fourcc(*"mp4v"), self.fps, (w, h)
-        )
+            self.fps = fps if fps > 0 else 30
+            self.writer = cv2.VideoWriter(
+                "object-tracking.mp4", cv2.VideoWriter_fourcc(*"mp4v"), self.fps, (w, h)
+            )
+        else:
+            self.cap = None
+            self.fps = 30
+            self.writer = None
 
         self.track_history = defaultdict(lambda: [])  # Store the track history
 
@@ -64,9 +69,6 @@ class ObjectTracking:
         self.circle_thickness = 2.5
         self.polyline_thickness = 2
 
-        # Window setup
-        self.window_name = "YOLO Tracking"
-        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
         # print allowed classes
         print("Allowed classes:", [self.names[i] for i in allowed_classes])
 
@@ -238,6 +240,67 @@ class ObjectTracking:
             2,
         )
 
+    def process_frame(self, im0, frame_count):
+        """Process a single frame and return the annotated frame and metadata."""
+        results = self.model.track(
+            im0,
+            persist=True,
+            classes=self.allowed_classes,
+            tracker="botsort.yaml",
+            verbose=False,
+        )
+
+        frame_meta = {
+            "frame": frame_count,
+            "timestamp": getattr(self, "fps", 30)
+            and frame_count / getattr(self, "fps", 30),
+            "speed": None,
+            "total_objects": 0,
+            "id_to_class": {},
+            "crossings": [],
+            "total_up": dict(self.count_crossing_up),
+            "total_down": dict(self.count_crossing_down),
+        }
+
+        self.draw_LOI(im0)
+
+        if results and len(results) > 0:
+            result = results[0]
+            if result.speed and isinstance(result.speed, dict):
+                speed = result.speed
+                frame_meta["speed"] = (
+                    speed.get("preprocess", 0)
+                    + speed.get("inference", 0)
+                    + speed.get("postprocess", 0)
+                )
+
+            if result.boxes is not None and result.boxes.id is not None:
+                boxes = result.boxes.xyxy.cpu()
+                ids = result.boxes.id.cpu()
+                clss = result.boxes.cls.tolist()
+
+                id_list = [int(track_id) for track_id in ids.tolist()]
+                class_name_list = [self.names[int(cls)] for cls in clss]
+                frame_meta["total_objects"] = len(boxes)
+                frame_meta["id_to_class"] = {
+                    str(track_id): class_name
+                    for track_id, class_name in zip(id_list, class_name_list)
+                }
+
+                for box, track_id, cls in zip(boxes, id_list, clss):
+                    self.draw_bbox(im0, box, track_id, cls)
+                    # Count crossing updates track_history and handles logic
+                    crossing_event = self.count_crossing(box, track_id, cls)
+                    if crossing_event is not None:
+                        frame_meta["crossings"].append(crossing_event)
+                        frame_meta["total_up"] = dict(self.count_crossing_up)
+                        frame_meta["total_down"] = dict(self.count_crossing_down)
+                    if self.draw_track_line:
+                        self.draw_tracked_line(im0, track_id, cls)
+
+        self.meta_data.append(frame_meta)
+        return im0, frame_meta
+
     def save_meta_data(self):
         """Save meta data to a JSON file."""
         import json
@@ -247,6 +310,10 @@ class ObjectTracking:
 
     def run(self):
         """Function to run object tracking on video file or webcam."""
+
+        # Window setup
+        self.window_name = "YOLO Tracking"
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
         frame_count = 0
 
