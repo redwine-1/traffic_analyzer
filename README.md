@@ -53,6 +53,7 @@ Model: yolo26
 * train
 * trucks 
 
+using `frame_skip = 2` results in mis counting with yolo26n, so I set it to 1 for now. I will experiment with skipping frames later.
 
 ### Tracking and Logic
 
