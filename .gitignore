@@ -2,3 +2,4 @@
 /*.mp4
 /*.pt
 /*.json
+__pycache__/
