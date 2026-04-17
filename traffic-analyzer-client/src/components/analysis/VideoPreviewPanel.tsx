@@ -94,7 +94,6 @@ function VideoPreviewPanel({
             return
         }
 
-        setShowVideoPlayer(true)
         setPlaybackNotice('')
         startDetectionStreaming()
     }
@@ -173,12 +172,6 @@ function VideoPreviewPanel({
                     disabled={isFrameLoading || !videoUrl || isDetectionStreaming}
                 >
                     Start Detection
-                </button>
-                <button type="button" className="preview-action-button" disabled>
-                    Pause Detection
-                </button>
-                <button type="button" className="preview-action-button" disabled>
-                    Stop Detection
                 </button>
             </div>
 

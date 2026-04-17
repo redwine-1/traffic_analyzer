@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import cv2
 import numpy as np
 import base64
@@ -19,6 +20,23 @@ app.add_middleware(
 # We can initialize the tracker globally and use it per connection,
 # or create a new tracker per websocket connection. A new one per connection is safer.
 allowed_classes = [2, 3, 5, 6, 7]
+loi_y = 500
+current_model = "yolo26n.pt"
+
+
+class TrackerConfig(BaseModel):
+    model: str
+    allowed_classes: list[int]
+    loi_y: int
+
+
+@app.post("/api/config")
+async def update_config(config: TrackerConfig):
+    global current_model, allowed_classes, loi_y
+    current_model = config.model
+    allowed_classes = config.allowed_classes
+    loi_y = config.loi_y
+    return {"message": "Configuration updated successfully"}
 
 
 @app.websocket("/ws")
@@ -26,11 +44,12 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
     tracker = ObjectTracking(
-        model="yolo26n.pt",
+        model=current_model,
         source=None,  # No local file, we process frames on the fly
         allowed_classes=allowed_classes,
         draw_track_line=True,
         skip_frame=1,
+        loi_y=loi_y,
     )
     frame_count = 0
     try:

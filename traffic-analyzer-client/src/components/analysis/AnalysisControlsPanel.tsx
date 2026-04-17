@@ -5,10 +5,11 @@ type AnalysisControlsPanelProps = {
     selectedClasses: string[]
     loiHeight: number
     loiMax: number
+    configStatus: string
     onModelChange: (nextModel: string) => void
     onClassToggle: (className: string) => void
     onLoiHeightChange: (nextHeight: number) => void
-    onChangeVideo: () => void
+    onSetConfig: () => void
 }
 
 function AnalysisControlsPanel({
@@ -18,10 +19,11 @@ function AnalysisControlsPanel({
     selectedClasses,
     loiHeight,
     loiMax,
+    configStatus,
     onModelChange,
     onClassToggle,
     onLoiHeightChange,
-    onChangeVideo,
+    onSetConfig,
 }: AnalysisControlsPanelProps) {
     return (
         <section className="analysis-panel controls-panel" aria-label="Model and classes configuration">
@@ -85,9 +87,15 @@ function AnalysisControlsPanel({
                 <p className="control-note">Range: 0 to {Math.max(loiMax, 1)} px (video height)</p>
             </div>
 
-            <button type="button" className="ghost-button" onClick={onChangeVideo}>
-                Back to Upload
+            <button type="button" className="ghost-button" onClick={onSetConfig}>
+                Set Configuration
             </button>
+
+            {configStatus && (
+                <p className="control-note success-status" style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>
+                    {configStatus}
+                </p>
+            )}
         </section>
     )
 }

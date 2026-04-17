@@ -19,7 +19,24 @@ type TrafficAnalysisPageProps = {
 const MODEL_OPTIONS = ['YOLO26n', 'YOLO26m', 'YOLO26l']
 const AVAILABLE_CLASSES = ['car', 'bus', 'truck', 'train', 'motorcycle', 'bicycle', 'person', 'traffic-light']
 
-function TrafficAnalysisPage({ videoFile, onChangeVideo }: TrafficAnalysisPageProps) {
+const CLASS_MAP: Record<string, number> = {
+    'person': 0,
+    'bicycle': 1,
+    'car': 2,
+    'motorcycle': 3,
+    'bus': 5,
+    'train': 6,
+    'truck': 7,
+    'traffic-light': 9
+}
+
+const MODEL_MAP: Record<string, string> = {
+    'YOLO26n': 'yolo26n.pt',
+    'YOLO26m': 'yolo26m.pt',
+    'YOLO26l': 'yolo26l.pt'
+}
+
+function TrafficAnalysisPage({ videoFile }: TrafficAnalysisPageProps) {
     const [model, setModel] = useState(MODEL_OPTIONS[0])
     const [selectedClasses, setSelectedClasses] = useState<string[]>(['car', 'bus', 'truck'])
     const [frameNumber, setFrameNumber] = useState(0)
@@ -34,6 +51,7 @@ function TrafficAnalysisPage({ videoFile, onChangeVideo }: TrafficAnalysisPagePr
     const [videoMetadata, setVideoMetadata] = useState<VideoMetadata>(EMPTY_METADATA)
     const [loiHeight, setLoiHeight] = useState(0)
     const [progressPercent, setProgressPercent] = useState(0)
+    const [configStatus, setConfigStatus] = useState('')
 
     const handleMetadataUpdate = (metadata: any, currentProgress?: number) => {
         if (metadata) {
@@ -162,6 +180,40 @@ function TrafficAnalysisPage({ videoFile, onChangeVideo }: TrafficAnalysisPagePr
         setLoiHeight(safeHeight)
     }
 
+    const handleSetConfig = async () => {
+        setConfigStatus('Saving...')
+        try {
+            const mappedClasses = selectedClasses
+                .map((cls) => CLASS_MAP[cls])
+                .filter((id) => id !== undefined)
+
+            const mappedModel = MODEL_MAP[model] || 'yolo26n.pt'
+
+            const response = await fetch('http://localhost:8765/api/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: mappedModel,
+                    allowed_classes: mappedClasses,
+                    loi_y: loiHeight,
+                }),
+            })
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}))
+                setConfigStatus(`Error: ${data.message || 'Unknown error'}`)
+            } else {
+                setConfigStatus('Configuration updated successfully!')
+                setTimeout(() => setConfigStatus(''), 3000)
+            }
+        } catch (error) {
+            console.error('Error updating config:', error)
+            setConfigStatus('Network error while updating configuration.')
+        }
+    }
+
     return (
         <main className="analysis-page">
             <section className="analysis-shell">
@@ -204,10 +256,11 @@ function TrafficAnalysisPage({ videoFile, onChangeVideo }: TrafficAnalysisPagePr
                         selectedClasses={selectedClasses}
                         loiHeight={loiHeight}
                         loiMax={videoMetadata.height}
+                        configStatus={configStatus}
                         onModelChange={setModel}
                         onClassToggle={handleClassToggle}
                         onLoiHeightChange={handleLoiHeightChange}
-                        onChangeVideo={onChangeVideo}
+                        onSetConfig={handleSetConfig}
                     />
                 </section>
             </section>
