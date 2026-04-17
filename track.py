@@ -33,6 +33,9 @@ class ObjectTracking:
         self.count_crossing_up = defaultdict(int)
         self.count_crossing_down = defaultdict(int)
         self.track_last_side = {}
+        self.total_count = 0
+        self.meta_data = []
+        self.selected_id = None
 
         # Video capturing module
         self.cap = cv2.VideoCapture(source)
@@ -47,8 +50,9 @@ class ObjectTracking:
                 cv2.CAP_PROP_FPS,
             )
         )
+        self.fps = fps if fps > 0 else 30
         self.writer = cv2.VideoWriter(
-            "object-tracking.mp4", cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h)
+            "object-tracking.mp4", cv2.VideoWriter_fourcc(*"mp4v"), self.fps, (w, h)
         )
 
         self.track_history = defaultdict(lambda: [])  # Store the track history
@@ -139,9 +143,6 @@ class ObjectTracking:
     def count_crossing(self, box, track_id, cls):
         """Count if the track has crossed the line of interest (LOI)."""
 
-        if self.allowed_classes is not None and cls not in self.allowed_classes:
-            return
-
         x1, y1, x2, y2 = box
         centroid = (float((x1 + x2) / 2), float((y1 + y2) / 2))
 
@@ -170,14 +171,24 @@ class ObjectTracking:
                 self.count_crossing_up[class_name] += 1
                 direction = "up"
 
+            crossing_event = {
+                "track_id": int(track_id),
+                "class": class_name,
+                "direction": direction,
+            }
+
             print(
                 f"{class_name} crossed {direction} | "
                 f"up: {dict(self.count_crossing_up)} | "
                 f"down: {dict(self.count_crossing_down)}"
             )
+        else:
+            crossing_event = None
 
         if current_side != 0:
             self.track_last_side[track_id] = current_side
+
+        return crossing_event
 
     def print_crossing_summary(self):
         """Print the final per-class crossing totals."""
@@ -192,6 +203,23 @@ class ObjectTracking:
                 f"{class_name}: up={self.count_crossing_up.get(class_name, 0)}, "
                 f"down={self.count_crossing_down.get(class_name, 0)}"
             )
+
+    def draw_LOI(self, im0):
+        """Draw the Line of Interest (LOI) on the frame."""
+        cv2.line(
+            im0,
+            (0, self.LOI_y),
+            (im0.shape[1], self.LOI_y),
+            (0, 255, 255),
+            2,
+        )
+
+    def save_meta_data(self):
+        """Save meta data to a JSON file."""
+        import json
+
+        with open("meta_data.json", "w") as f:
+            json.dump(self.meta_data, f, indent=4)
 
     def run(self):
         """Function to run object tracking on video file or webcam."""
@@ -219,31 +247,49 @@ class ObjectTracking:
                 verbose=False,
             )  # Object tracking
 
+            frame_meta = {
+                "frame": frame_count,
+                "timestamp": frame_count / self.fps,
+                "speed": None,
+                "total_objects": 0,
+                "id_to_class": {},
+                "crossings": [],
+            }
+
+            self.draw_LOI(im0)  # Draw Line of Interest for object counting
+
             if results and len(results) > 0:
                 result = results[0]
                 speed = result.speed
-                pre_speed = speed["preprocess"]
-                inference_speed = speed["inference"]
-                post_speed = speed["postprocess"]
+                pre_speed, inference_speed, post_speed = (
+                    speed["preprocess"],
+                    speed["inference"],
+                    speed["postprocess"],
+                )
+                frame_meta["speed"] = pre_speed + inference_speed + post_speed
 
                 if result.boxes is not None and result.boxes.id is not None:
                     boxes = result.boxes.xyxy.cpu()
                     ids = result.boxes.id.cpu()
                     clss = result.boxes.cls.tolist()
 
-                    for box, id, cls in zip(boxes, ids.tolist(), clss):
-                        # draw loi
-                        cv2.line(
-                            im0,
-                            (0, self.LOI_y),
-                            (im0.shape[1], self.LOI_y),
-                            (0, 255, 255),
-                            2,
-                        )
+                    id_list = [int(track_id) for track_id in ids.tolist()]
+                    class_name_list = [self.names[int(cls)] for cls in clss]
+                    frame_meta["total_objects"] = len(boxes)
+                    frame_meta["id_to_class"] = {
+                        str(track_id): class_name
+                        for track_id, class_name in zip(id_list, class_name_list)
+                    }
+
+                    for box, id, cls in zip(boxes, id_list, clss):
                         self.draw_bbox(im0, box, id, cls)
-                        self.count_crossing(box, id, cls)
+                        crossing_event = self.count_crossing(box, id, cls)
+                        if crossing_event is not None:
+                            frame_meta["crossings"].append(crossing_event)
                         if self.draw_track_line:
                             self.draw_tracked_line(im0, id, cls)
+
+            self.meta_data.append(frame_meta)
 
             self.writer.write(im0)
             cv2.imshow(self.window_name, im0)  # Display and handle input
@@ -259,6 +305,7 @@ class ObjectTracking:
         self.print_crossing_summary()
         self.cap.release()
         cv2.destroyAllWindows()
+        self.save_meta_data()
 
 
 if __name__ == "__main__":
@@ -267,7 +314,7 @@ if __name__ == "__main__":
 
     tracker = ObjectTracking(
         model="yolo26n.pt",
-        source="test.mp4",
+        source="Road Traffic - Dataset 01.mp4",
         allowed_classes=allowed_classes,
         draw_track_line=False,
         skip_frame=1,
