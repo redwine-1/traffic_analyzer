@@ -26,8 +26,6 @@ class ObjectTracking:
         self.skip_frame = skip_frame
         self.draw_track_line = draw_track_line
         self.source = source
-        # print allowed classes
-        print("Allowed classes:", [self.names[i] for i in allowed_classes])
 
         self.LOI_y = loi_y  # y-coordinate of the line of interest (LOI)
         self.count_crossing_up = defaultdict(int)
@@ -69,9 +67,18 @@ class ObjectTracking:
         # Window setup
         self.window_name = "YOLO Tracking"
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        # print allowed classes
+        print("Allowed classes:", [self.names[i] for i in allowed_classes])
 
     def draw_bbox(self, im0, box, track_id, cls):
-        """Draw bounding box with label at TOP-LEFT, but TEXT CENTERED in its box."""
+        """Draw bounding box with label at TOP-LEFT, but TEXT CENTERED in its box.
+
+        Args:
+            im0: The image/frame to draw on
+            box: Bounding box coordinates (x1, y1, x2, y2)
+            track_id: Unique ID of the tracked object
+            cls: Class index of the detected object
+        """
 
         x1, y1, x2, y2 = map(int, box)
 
@@ -118,6 +125,13 @@ class ObjectTracking:
         )
 
     def draw_tracked_line(self, im0, track_id, cls):
+        """Draw the tracking line for a given track ID.
+
+        Args:
+            im0: The image/frame to draw on
+            track_id: Unique ID of the tracked object
+            cls: Class index of the detected object
+        """
 
         track = self.track_history[track_id]
 
@@ -141,7 +155,13 @@ class ObjectTracking:
         )
 
     def count_crossing(self, box, track_id, cls):
-        """Count if the track has crossed the line of interest (LOI)."""
+        """Count if the track has crossed the line of interest (LOI).
+
+        Args:
+            box: Bounding box coordinates (x1, y1, x2, y2)
+            track_id: Unique ID of the tracked object
+            cls: Class index of the detected object
+        """
 
         x1, y1, x2, y2 = box
         centroid = (float((x1 + x2) / 2), float((y1 + y2) / 2))
@@ -205,7 +225,11 @@ class ObjectTracking:
             )
 
     def draw_LOI(self, im0):
-        """Draw the Line of Interest (LOI) on the frame."""
+        """Draw the Line of Interest (LOI) on the frame.
+
+        Args:
+            im0: The image/frame to draw on
+        """
         cv2.line(
             im0,
             (0, self.LOI_y),
