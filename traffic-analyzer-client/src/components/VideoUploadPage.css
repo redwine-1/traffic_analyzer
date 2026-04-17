@@ -1,0 +1,241 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+
+.upload-page {
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 4vw, 44px);
+    background:
+        radial-gradient(circle at 10% 5%, rgba(255, 190, 92, 0.32) 0%, rgba(255, 190, 92, 0) 44%),
+        radial-gradient(circle at 93% 95%, rgba(60, 180, 205, 0.26) 0%, rgba(60, 180, 205, 0) 48%),
+        linear-gradient(145deg, #f4f9ff 0%, #fffbf5 45%, #f4fff7 100%);
+}
+
+.upload-card {
+    width: min(720px, 100%);
+    padding: clamp(20px, 4vw, 36px);
+    border-radius: 26px;
+    border: 1px solid rgba(31, 56, 85, 0.14);
+    background: rgba(255, 255, 255, 0.86);
+    box-shadow:
+        0 26px 45px -20px rgba(15, 35, 56, 0.38),
+        0 12px 20px -18px rgba(15, 35, 56, 0.28);
+    backdrop-filter: blur(10px);
+    animation: card-enter 420ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.eyebrow {
+    margin: 0;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #177fb2;
+}
+
+#upload-title {
+    margin: 10px 0 8px;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    color: #0f2438;
+}
+
+.subtitle {
+    margin: 0 0 24px;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    font-size: clamp(15px, 2.2vw, 18px);
+    line-height: 1.5;
+    color: #51606f;
+}
+
+.dropzone {
+    position: relative;
+    display: block;
+    border: 2px dashed #8bb8cc;
+    border-radius: 20px;
+    padding: clamp(24px, 5vw, 42px);
+    background: linear-gradient(165deg, rgba(238, 251, 255, 0.7), rgba(253, 247, 236, 0.85));
+    transition:
+        border-color 180ms ease,
+        transform 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.dropzone:hover {
+    border-color: #177fb2;
+}
+
+.dropzone.active {
+    border-color: #0b6f9e;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -18px rgba(15, 71, 100, 0.65);
+}
+
+.dropzone.has-file {
+    border-style: solid;
+    border-color: #25a86f;
+    background: linear-gradient(165deg, rgba(240, 254, 248, 0.98), rgba(243, 253, 255, 0.94));
+}
+
+.file-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.dropzone-content {
+    text-align: center;
+    display: grid;
+    gap: 10px;
+    justify-items: center;
+}
+
+.dropzone-title {
+    margin: 0;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    font-size: clamp(22px, 4vw, 30px);
+    line-height: 1.2;
+    color: #0f2438;
+}
+
+.dropzone-description {
+    margin: 0;
+    color: #4f5e6d;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+.secondary-button {
+    margin-top: 8px;
+    padding: 11px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(23, 127, 178, 0.45);
+    background: rgba(23, 127, 178, 0.1);
+    color: #0f5577;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 180ms ease,
+        transform 180ms ease;
+}
+
+.secondary-button:hover {
+    background: rgba(23, 127, 178, 0.2);
+    transform: translateY(-1px);
+}
+
+.file-preview {
+    margin-top: 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(37, 168, 111, 0.4);
+    background: rgba(37, 168, 111, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+}
+
+.file-name {
+    margin: 0;
+    color: #094229;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.file-meta {
+    margin: 3px 0 0;
+    color: #317451;
+    font-size: 14px;
+}
+
+.clear-button {
+    flex-shrink: 0;
+    border: 1px solid rgba(9, 66, 41, 0.25);
+    background: white;
+    color: #115435;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.helper-text {
+    margin: 16px 0 0;
+    color: #546576;
+    font-size: 15px;
+}
+
+.error-text {
+    margin: 16px 0 0;
+    color: #b82f2f;
+    font-weight: 600;
+}
+
+.next-button {
+    width: 100%;
+    margin-top: 22px;
+    border: 0;
+    border-radius: 14px;
+    padding: 13px 18px;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #f6fdff;
+    background: linear-gradient(135deg, #ff8c4a 0%, #f06f32 34%, #1c9a94 100%);
+    cursor: pointer;
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease,
+        filter 180ms ease;
+}
+
+.next-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 20px -16px rgba(26, 123, 126, 0.6);
+}
+
+.next-button:disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.15) saturate(0.4);
+    opacity: 0.65;
+}
+
+@keyframes card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 720px) {
+    .upload-card {
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .dropzone {
+        border-radius: 14px;
+        padding: 20px 16px;
+    }
+
+    .file-preview {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .clear-button {
+        width: 100%;
+    }
+}
