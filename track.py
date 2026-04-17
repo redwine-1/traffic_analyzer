@@ -17,6 +17,7 @@ class ObjectTracking:
         skip_frame=2,
         draw_track_line=True,
         allowed_classes=None,
+        loi_y=500,
     ):
 
         self.model = YOLO(model)  # Model initialization
@@ -24,8 +25,11 @@ class ObjectTracking:
         self.allowed_classes = allowed_classes
         self.skip_frame = skip_frame
         self.draw_track_line = draw_track_line
+        self.source = source
+        # print allowed classes
+        print("Allowed classes:", [self.names[i] for i in allowed_classes])
 
-        self.LOI_y = 500  # y-coordinate of the line of interest (LOI)
+        self.LOI_y = loi_y  # y-coordinate of the line of interest (LOI)
         self.count_crossing_up = defaultdict(int)
         self.count_crossing_down = defaultdict(int)
         self.track_last_side = {}
@@ -104,7 +108,7 @@ class ObjectTracking:
             (text_x, text_y),
             cv2.FONT_HERSHEY_SIMPLEX,
             self.font,
-            (104, 31, 17) if cls == 2 else (255, 255, 255),  # white text
+            (104, 31, 17),  # white text
             self.text_width,
             cv2.LINE_AA,
         )
@@ -208,11 +212,19 @@ class ObjectTracking:
                 continue
 
             results = self.model.track(
-                im0, persist=True, classes=self.allowed_classes, tracker="botsort.yaml"
+                im0,
+                persist=True,
+                classes=self.allowed_classes,
+                tracker="botsort.yaml",
+                verbose=False,
             )  # Object tracking
 
             if results and len(results) > 0:
                 result = results[0]
+                speed = result.speed
+                pre_speed = speed["preprocess"]
+                inference_speed = speed["inference"]
+                post_speed = speed["postprocess"]
 
                 if result.boxes is not None and result.boxes.id is not None:
                     boxes = result.boxes.xyxy.cpu()
@@ -255,7 +267,7 @@ if __name__ == "__main__":
 
     tracker = ObjectTracking(
         model="yolo26n.pt",
-        source="Road Traffic - Dataset 01.mp4",
+        source="test.mp4",
         allowed_classes=allowed_classes,
         draw_track_line=False,
         skip_frame=1,
