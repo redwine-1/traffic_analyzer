@@ -36,7 +36,7 @@ const MODEL_MAP: Record<string, string> = {
     'YOLO26l': 'yolo26l.pt'
 }
 
-function TrafficAnalysisPage({ videoFile }: TrafficAnalysisPageProps) {
+function TrafficAnalysisPage({ videoFile, onChangeVideo }: TrafficAnalysisPageProps) {
     const [model, setModel] = useState(MODEL_OPTIONS[0])
     const [selectedClasses, setSelectedClasses] = useState<string[]>(['car', 'bus', 'truck'])
     const [frameNumber, setFrameNumber] = useState(0)
@@ -223,8 +223,14 @@ function TrafficAnalysisPage({ videoFile }: TrafficAnalysisPageProps) {
                     <div>
                         <p className="analysis-eyebrow">Traffic Analyzer</p>
                         <h1 className="analysis-title">Detection Setup</h1>
+                        <p className="analysis-file">{videoFile.name}</p>
                     </div>
-                    <p className="analysis-file">{videoFile.name}</p>
+                    <button
+                        className="upload-again-button"
+                        onClick={onChangeVideo}
+                    >
+                        Upload Again
+                    </button>
                 </header>
 
                 <AnalysisStatsBar

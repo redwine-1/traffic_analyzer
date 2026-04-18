@@ -45,6 +45,24 @@
     color: #11283c;
 }
 
+.upload-again-button {
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(23, 127, 178, 0.45);
+    background: rgba(23, 127, 178, 0.1);
+    color: #0f5577;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 180ms ease, transform 180ms ease;
+    align-self: flex-start;
+}
+
+.upload-again-button:hover {
+    background: rgba(23, 127, 178, 0.2);
+    transform: translateY(-1px);
+}
+
 .analysis-file {
     margin: 0;
     padding: 8px 12px;
