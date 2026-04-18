@@ -11,7 +11,6 @@ The system:
 Assumptions:
 * The counting algorithm is based on a single predefined Line of Interest (LOI) within the video frame. Only vehicles that cross this line are considered for counting.
 * Vehicles that are detected and tracked but do not cross the LOI are excluded from the count.
-* Frame indices and timestamp data for a vehicle are recorded only when the vehicle crosses the LOI.
 * The final analysis and generated report are strictly derived from this LOI-based counting methodology.
 
 ## Demonstration
