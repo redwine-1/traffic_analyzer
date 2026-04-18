@@ -37,7 +37,7 @@ const MODEL_MAP: Record<string, string> = {
 }
 
 function TrafficAnalysisPage({ videoFile, onChangeVideo }: TrafficAnalysisPageProps) {
-    const [model, setModel] = useState(MODEL_OPTIONS[0])
+    const [model, setModel] = useState(MODEL_OPTIONS[2])
     const [selectedClasses, setSelectedClasses] = useState<string[]>(['car', 'bus', 'truck'])
     const [frameNumber, setFrameNumber] = useState(0)
     const [upCount, setUpCount] = useState(0)
