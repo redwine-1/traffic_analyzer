@@ -14,7 +14,7 @@ Assumptions:
 * The final analysis and generated report are strictly derived from this LOI-based counting methodology.
 
 ## Demonstration
-Demo Video: [video](https://www.youtube.com/)
+Demo Video: [video](https://youtu.be/GdyplzDojU8)
 
 ## Local Setup & Dependencies
 * Python 3.10+
