@@ -19,8 +19,7 @@ Demo Video: [video](https://www.youtube.com/)
 
 ## Local Setup & Dependencies
 * Python 3.10+
-* ultralytics 
-* (Optional) CUDA for GPU acceleration
+
 
 ### Installation Instructions
 
@@ -39,10 +38,36 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ``` 
 
+## Running the Application
+1. **Start the FastAPI backend:**
+```bash
+python main.py
+```
+2. **Start the React frontend:**
+```bash
+cd traffic-analyzer-client
+npm install
+npm run dev
+```
+3. **Access the application:**
+   1. Open your browser and navigate to `http://localhost:5173` to access the traffic analyzer interface.
+   2. Upload a video file and click `next`
+   3. Set LOI, select classes of interest, and click `Set Configuration`. Must do this before starting detection.
+   4. Click `Start Detection` to begin processing the video. The processed video with detections and counts will be displayed in real-time.
+   5. After processing is complete, click `Download Report` to get a CSV file containing the counts and timestamps of vehicles that crossed the LOI and click `Download Video` to get the processed video with detections.
+
 ## Architecture Breakdown
 
-###  Front-End / User Interface Architecture
-Haven't decided yet.
+###  Web Application
+**Frontend:** React
+
+**Backend:** FastAPI
+
+#### Communication:
+**WebSocket:** The application uses a strict synchronous frame-by-frame pipeline over WebSocket. First, the frontend extracts a video frame, encodes it, and sends it to the backend. Crucially, the frontend then enters a waiting state, pausing until a response is received. The backend decodes the image, runs the YOLO model for object detection, updates tracking states, and overlays bounding boxes. The backend then responds with the processed base64 frame alongside a metadata JSON payload containing current counts and timestamps. Only upon receiving this completed payload does the frontend render the result and dispatch the next frame.
+
+**REST API:** The backend also provides a REST API endpoint (POST request) to setup the detection parameters such as the Line of Interest (LOI) and the classes of interest.
+
 ###  Computer Vision Pipeline
 Model: yolo26  
 #### Why yolo26?
