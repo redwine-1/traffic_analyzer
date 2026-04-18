@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-export function useProcessedPlayback(processedFrames: string[]) {
+export function useProcessedPlayback(processedFrames: string[], fps: number = 25) {
     const [playbackIdx, setPlaybackIdx] = useState(0);
     const [isPlayingProcessed, setIsPlayingProcessed] = useState(false);
     const playbackTimerRef = useRef<number | null>(null);
@@ -21,6 +21,8 @@ export function useProcessedPlayback(processedFrames: string[]) {
             clearInterval(playbackTimerRef.current);
         }
 
+        const safeFps = (fps && fps > 0) ? fps : 25;
+
         playbackTimerRef.current = window.setInterval(() => {
             setPlaybackIdx((prev) => {
                 if (prev >= processedFrames.length - 1) {
@@ -29,8 +31,8 @@ export function useProcessedPlayback(processedFrames: string[]) {
                 }
                 return prev + 1;
             });
-        }, 1000 / 30);
-    }, [processedFrames.length, stopProcessedPlayback]);
+        }, 1000 / safeFps);
+    }, [processedFrames.length, stopProcessedPlayback, fps]);
 
     useEffect(() => {
         return () => stopProcessedPlayback();

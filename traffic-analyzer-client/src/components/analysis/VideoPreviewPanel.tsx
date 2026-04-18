@@ -14,6 +14,7 @@ type VideoPreviewPanelProps = {
     videoWidth: number
     videoHeight: number
     durationSeconds: number
+    fps?: number
     loiHeight: number
     loiMax: number
     onMetadataUpdate?: (metadata: any, currentProgress?: number) => void
@@ -28,6 +29,7 @@ function VideoPreviewPanel({
     videoWidth,
     videoHeight,
     durationSeconds,
+    fps,
     loiHeight,
     loiMax,
     onMetadataUpdate,
@@ -60,7 +62,7 @@ function VideoPreviewPanel({
         isPlayingProcessed,
         startProcessedPlayback,
         stopProcessedPlayback
-    } = useProcessedPlayback(processedFrames)
+    } = useProcessedPlayback(processedFrames, fps)
 
     const {
         handleDownloadVideo,
@@ -69,7 +71,8 @@ function VideoPreviewPanel({
         processedFrames,
         videoWidth,
         videoHeight,
-        fileName
+        fileName,
+        fps,
     })
 
     const loiPercent = loiMax > 0 ? Math.max(0, Math.min((loiHeight / loiMax) * 100, 100)) : 50

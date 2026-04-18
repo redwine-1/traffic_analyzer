@@ -91,7 +91,8 @@ function TrafficAnalysisPage({ videoFile }: TrafficAnalysisPageProps) {
 
         const readMetadata = async () => {
             try {
-                const metadata = await probeVideoMetadata(previewVideoUrl)
+                // Pass the raw File object directly so mediainfo.js can parse the headers natively
+                const metadata = await probeVideoMetadata(videoFile)
                 if (!isActive) {
                     return
                 }
@@ -198,6 +199,7 @@ function TrafficAnalysisPage({ videoFile }: TrafficAnalysisPageProps) {
                     model: mappedModel,
                     allowed_classes: mappedClasses,
                     loi_y: loiHeight,
+                    fps: videoMetadata.fps || 25
                 }),
             })
 
@@ -245,6 +247,7 @@ function TrafficAnalysisPage({ videoFile }: TrafficAnalysisPageProps) {
                         videoWidth={videoMetadata.width}
                         videoHeight={videoMetadata.height}
                         durationSeconds={videoMetadata.duration}
+                        fps={videoMetadata.fps}
                         loiHeight={loiHeight}
                         loiMax={videoMetadata.height}
                         onMetadataUpdate={handleMetadataUpdate}

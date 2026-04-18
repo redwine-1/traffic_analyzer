@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "mediainfo.js": "^0.3.7",
+    "mp4-muxer": "^5.2.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

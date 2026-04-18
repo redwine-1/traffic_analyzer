@@ -6,6 +6,7 @@ import numpy as np
 import base64
 import json
 from track import ObjectTracking
+import config
 
 app = FastAPI()
 
@@ -19,23 +20,21 @@ app.add_middleware(
 
 # We can initialize the tracker globally and use it per connection,
 # or create a new tracker per websocket connection. A new one per connection is safer.
-allowed_classes = [2, 3, 5, 6, 7]
-loi_y = 500
-current_model = "yolo26n.pt"
 
 
 class TrackerConfig(BaseModel):
     model: str
     allowed_classes: list[int]
     loi_y: int
+    fps: float
 
 
 @app.post("/api/config")
-async def update_config(config: TrackerConfig):
-    global current_model, allowed_classes, loi_y
-    current_model = config.model
-    allowed_classes = config.allowed_classes
-    loi_y = config.loi_y
+async def update_config(conf: TrackerConfig):
+    config.MODEL = conf.model
+    config.ALLOWED_CLASSES = conf.allowed_classes
+    config.LOI_Y = conf.loi_y
+    config.FPS = conf.fps
     return {"message": "Configuration updated successfully"}
 
 
@@ -44,12 +43,13 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
     tracker = ObjectTracking(
-        model=current_model,
+        model=config.MODEL,
         source=None,  # No local file, we process frames on the fly
-        allowed_classes=allowed_classes,
+        allowed_classes=config.ALLOWED_CLASSES,
         draw_track_line=True,
         skip_frame=1,
-        loi_y=loi_y,
+        loi_y=config.LOI_Y,
+        source_fps=config.FPS,
     )
     frame_count = 0
     try:

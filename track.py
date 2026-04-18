@@ -6,6 +6,8 @@ from ultralytics.utils.plotting import colors
 
 from collections import defaultdict
 
+import config
+
 
 class ObjectTracking:
     """Object Tracking using Ultralytics YOLO26"""
@@ -18,6 +20,7 @@ class ObjectTracking:
         draw_track_line=True,
         allowed_classes=None,
         loi_y=500,
+        source_fps=config.FPS,
     ):
 
         self.model = YOLO(model)  # Model initialization
@@ -49,13 +52,13 @@ class ObjectTracking:
                     cv2.CAP_PROP_FPS,
                 )
             )
-            self.fps = fps if fps > 0 else 30
+            self.fps = fps if fps > 0 else source_fps
             self.writer = cv2.VideoWriter(
                 "object-tracking.mp4", cv2.VideoWriter_fourcc(*"mp4v"), self.fps, (w, h)
             )
         else:
             self.cap = None
-            self.fps = 30
+            self.fps = source_fps
             self.writer = None
 
         self.track_history = defaultdict(lambda: [])  # Store the track history
@@ -252,8 +255,7 @@ class ObjectTracking:
 
         frame_meta = {
             "frame": frame_count,
-            "timestamp": getattr(self, "fps", 30)
-            and frame_count / getattr(self, "fps", 30),
+            "timestamp": frame_count / self.fps,
             "speed": None,
             "total_objects": 0,
             "id_to_class": {},
