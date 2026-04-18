@@ -262,6 +262,8 @@ class ObjectTracking:
             "crossings": [],
             "total_up": dict(self.count_crossing_up),
             "total_down": dict(self.count_crossing_down),
+            "total_count": sum(self.count_crossing_up.values())
+            + sum(self.count_crossing_down.values()),
         }
 
         self.draw_LOI(im0)

@@ -19,6 +19,7 @@ export function useDetectionStream({
     const [isDetectionStreaming, setIsDetectionStreaming] = useState(false);
     const [processedFrameSrc, setProcessedFrameSrc] = useState('');
     const [processedMetadata, setProcessedMetadata] = useState<any>(null);
+    const [processedMetadataHistory, setProcessedMetadataHistory] = useState<any[]>([]);
 
     const [processedFrames, setProcessedFrames] = useState<string[]>([]);
     const [isProcessingComplete, setIsProcessingComplete] = useState(false);
@@ -82,6 +83,7 @@ export function useDetectionStream({
         stopDetectionStreaming();
         setDetectionNotice('Connecting to ws://localhost:8765/ws ...');
         setProcessedFrames([]);
+        setProcessedMetadataHistory([]);
         setIsProcessingComplete(false);
 
         detectionVideoElement.currentTime = 0;
@@ -165,6 +167,7 @@ export function useDetectionStream({
                 }
                 if (response.metadata) {
                     setProcessedMetadata(response.metadata);
+                    setProcessedMetadataHistory((prev) => [...prev, response.metadata]);
                     if (onMetadataUpdate && detectionVideoRef.current) {
                         const current = detectionVideoRef.current.currentTime;
                         const total = detectionVideoRef.current.duration;
@@ -209,6 +212,7 @@ export function useDetectionStream({
         isDetectionStreaming,
         processedFrameSrc,
         processedMetadata,
+        processedMetadataHistory,
         processedFrames,
         isProcessingComplete,
         startDetectionStreaming,

@@ -2,6 +2,7 @@
 import { useDetectionStream } from '../../hooks/useDetectionStream'
 import { useProcessedPlayback } from '../../hooks/useProcessedPlayback'
 import { useVideoDownload } from '../../hooks/useVideoDownload'
+import { useReportDownload } from '../../hooks/useReportDownload'
 import { VideoPreviewStage } from './VideoPreviewStage'
 
 type VideoPreviewPanelProps = {
@@ -46,6 +47,7 @@ function VideoPreviewPanel({
         isDetectionStreaming,
         processedFrameSrc,
         processedFrames,
+        processedMetadataHistory,
         isProcessingComplete,
         startDetectionStreaming,
         stopDetectionStreaming,
@@ -73,6 +75,14 @@ function VideoPreviewPanel({
         videoHeight,
         fileName,
         fps,
+    })
+
+    const {
+        handleDownloadReport,
+        reportNotice,
+    } = useReportDownload({
+        processedMetadataHistory,
+        fileName,
     })
 
     const loiPercent = loiMax > 0 ? Math.max(0, Math.min((loiHeight / loiMax) * 100, 100)) : 50
@@ -166,19 +176,30 @@ function VideoPreviewPanel({
                     Start Detection
                 </button>
                 {isProcessingComplete && processedFrames.length > 0 && (
-                    <button
-                        type="button"
-                        className="preview-action-button"
-                        onClick={handleDownloadVideo}
-                        aria-label="Download processed video"
-                    >
-                        Download Video
-                    </button>
+                    <>
+                        <button
+                            type="button"
+                            className="preview-action-button"
+                            onClick={handleDownloadVideo}
+                            aria-label="Download processed video"
+                        >
+                            Download Video
+                        </button>
+                        <button
+                            type="button"
+                            className="preview-action-button"
+                            onClick={handleDownloadReport}
+                            aria-label="Download analysis report"
+                        >
+                            Download Report
+                        </button>
+                    </>
                 )}
             </div>
 
-            {playbackNotice && !downloadNotice && <p className="preview-note">{playbackNotice}</p>}
+            {playbackNotice && !downloadNotice && !reportNotice && <p className="preview-note">{playbackNotice}</p>}
             {downloadNotice && <p className="preview-note">{downloadNotice}</p>}
+            {reportNotice && <p className="preview-note">{reportNotice}</p>}
             {detectionNotice && <p className="preview-note">{detectionNotice}</p>}
             {previewNotice && <p className="preview-note">{previewNotice}</p>}
 
